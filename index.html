@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmojiCrush©</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- tsParticles (for background effects) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tsparticles/2.12.0/tsparticles.bundle.min.js"></script>
+    
+    <!-- Tone.js (for generative audio) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    
+    <!-- Google Font: Orbitron -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Custom styles */
+        html, body {
+            font-family: 'Orbitron', sans-serif;
+            color: #e0f2fe; /* light-cyan */
+            background-color: #0c0a09; /* almost black */
+            height: 100vh; /* Lock to viewport height */
+            width: 100%;  /* Changed from 100vw */
+            overflow: hidden; /* Remove all scrollbars */
+            margin: 0;
+            padding: 0;
+            position: relative; /* Ensure proper bounding */
+        }
+        
+        /* Particle background container */
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            top: 0;
+            left: 0;
+            display: block; /* Remove potential inline spacing */
+        }
+
+        /* Main container for all UI elements */
+        .main-container {
+            position: relative;
+            z-index: 1;
+            height: 100%; /* Fill the body */
+            width: 100%; /* Changed from 100vw */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 1rem;
+        }
+
+        /* The glassmorphism console panel */
+        .console-panel {
+            background: rgba(15, 23, 42, 0.4); /* slate-900 with alpha */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.3); /* cyan-400 with alpha */
+            border-radius: 1.5rem; /* rounded-3xl */
+            padding: 1.5rem;
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.3), 0 0 40px rgba(56, 189, 248, 0.2);
+            /* max-height: 98vh; */ /* Removed */
+            /* overflow-y: auto; */ /* Removed */
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        @media (min-width: 640px) {
+            .console-panel {
+                padding: 2.5rem;
+            }
+        }
+        
+        /* Custom text shadow for the "neon" title */
+        .text-glow {
+            text-shadow: 0 0 8px rgba(56, 189, 248, 0.7), 0 0 20px rgba(56, 189, 248, 0.5);
+        }
+        
+        /* Game board grid */
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(var(--grid-size), 1fr);
+            grid-template-rows: repeat(var(--grid-size), 1fr);
+            border: 2px solid rgba(56, 189, 248, 0.5);
+            border-radius: 0.75rem; /* rounded-xl */
+            background: rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            
+            /* Dynamic grid cell size, responsive to smallest viewport dim */
+            width: clamp(300px, 85vmin, 500px);
+            height: clamp(300px, 85vmin, 500px);
+        }
+        
+        .game-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        /* Animation for a selected gem */
+        .game-cell.selected {
+            transform: scale(1.1);
+            background: rgba(56, 189, 248, 0.3);
+            border-radius: 0.5rem;
+        }
+        
+        /* Animation for newly added gems */
+        .game-cell.pop-in {
+            animation: popIn 0.3s ease forwards;
+        }
+        
+        /* Animation for matched gems */
+        .game-cell.matched {
+            animation: matched 0.4s ease forwards;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes matched {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        /* Custom button style */
+        .btn-primary {
+            font-family: 'Orbitron', sans-serif;
+            background-image: linear-gradient(to right, #0ea5e9, #22d3ee); /* sky-500 to cyan-400 */
+            color: #082f49; /* sky-950 */
+            font-weight: 700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.8);
+        }
+
+        /* Modal for Game Over */
+        #game-over-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        #game-over-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            animation: popIn 0.3s ease forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-950">
+
+    <!-- Particle background -->
+    <div id="particles-js"></div>
+
+    <!-- Main UI Container -->
+    <div class="main-container">
+
+        <div class="console-panel">
+            <!-- Header -->
+            <header class="text-center mb-6">
+                <h1 class="text-4xl sm:text-5xl font-bold text-cyan-300 text-glow tracking-widest">EMOJICRUSH</h1>
+            </header>
+
+            <!-- Dashboard -->
+            <div class="flex justify-between items-center mb-6 text-xl sm:text-2xl font-semibold text-cyan-200">
+                <div class="bg-black/20 p-3 rounded-lg border border-cyan-700/50">
+                    SCORE: <span id="score" class="ml-2 text-white font-bold">0</span>
+                </div>
+                <div class="bg-black/20 p-3 rounded-lg border border-cyan-700/50">
+                    MOVES: <span id="moves" class="ml-2 text-white font-bold">30</span>
+                </div>
+            </div>
+
+            <!-- Game Board -->
+            <div id="game-board" class="shadow-inner">
+                <!-- Cells will be generated by JS -->
+            </div>
+
+            <!-- Reset Button -->
+            <div class="mt-6 text-center">
+                <button id="reset-button" class="btn-primary">REINITIALIZE CONSOLE</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-4 text-center">
+            <div class="flex justify-center space-x-6 mb-3">
+                <!-- LinkedIn Icon -->
+                <a href="https://www.linkedin.com/in/rajatkumar7/" target="_blank" rel="noopener noreferrer" class="text-cyan-300 hover:text-cyan-100 transition-colors duration-200">
+                    <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                    </svg>
+                </a>
+                <!-- GitHub Icon -->
+                <a href="https://github.com/rajatkumar1011" target="_blank" rel="noopener noreferrer" class="text-cyan-300 hover:text-cyan-100 transition-colors duration-200">
+                    <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.034c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.109-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                </a>
+            </div>
+            <p class="text-sm text-cyan-200">Made with <span class="text-red-500">❤️</span> by Rajat Kumar</p>
+            <p class="text-xs text-cyan-400/70 mt-1">Copyright © 2025 Rajat Kumar. All Rights Reserved.</p>
+        </footer>
+
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-modal">
+        <div class="modal-content console-panel text-center p-8">
+            <h2 class="text-4xl font-bold text-cyan-300 text-glow mb-4">SYSTEM OFFLINE</h2>
+            <p class="text-xl text-white mb-2">Final Score:</p>
+            <p id="final-score" class="text-5xl font-bold text-cyan-400 mb-8">0</p>
+            <button id="restart-button" class="btn-primary text-xl">REBOOT</button>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- 1. PARTICLE BACKGROUND INIT ---
+            tsParticles.load("particles-js", {
+                particles: {
+                    number: { value: 80, density: { enable: true, value_area: 800 } },
+                    color: { value: "#06b6d4" }, // cyan-500
+                    shape: { type: "circle" },
+                    opacity: { value: 0.5, random: true, anim: { enable: true, speed: 1, opacity_min: 0.1, sync: false } },
+                    size: { value: 3, random: true, anim: { enable: false, speed: 40, size_min: 0.1, sync: false } },
+                    line_linked: { enable: true, distance: 150, color: "#0e7490", opacity: 0.4, width: 1 }, // cyan-700
+                    move: {
+                        enable: true,
+                        speed: 1,
+                        direction: "none",
+                        random: false,
+                        straight: false,
+                        out_mode: "out",
+                        attract: { enable: false, rotateX: 600, rotateY: 1200 }
+                    }
+                },
+                interactivity: {
+                    detect_on: "canvas",
+                    events: {
+                        onhover: { enable: true, mode: "grab" },
+                        onclick: { enable: true, mode: "push" },
+                        resize: true
+                    },
+                    modes: {
+                        grab: { distance: 140, line_opacity: 1 },
+                        bubble: { distance: 400, size: 40, duration: 2, opacity: 8, speed: 3 },
+                        repulse: { distance: 200 },
+                        push: { particles_nb: 4 },
+                        remove: { particles_nb: 2 }
+                    }
+                },
+                retina_detect: true
+            });
+
+            // --- 2. AUDIO CONTEXT & SYNTHS INIT ---
+            let audioReady = false;
+            
+            // Swap sound
+            const swapSynth = new Tone.PluckSynth({
+                attackNoise: 1,
+                dampening: 4000,
+                resonance: 0.7
+            }).toDestination();
+
+            // Match sound
+            const matchSynth = new Tone.FMSynth({
+                harmonicity: 3,
+                modulationIndex: 10,
+                detune: 0,
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.5 },
+                modulation: { type: "square" },
+                modulationEnvelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.5 }
+            }).toDestination();
+
+            // Error sound
+            const errorSynth = new Tone.MembraneSynth({
+                pitchDecay: 0.05,
+                octaves: 3,
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.1 }
+            }).toDestination();
+            
+            // Function to play sound (with a check for user interaction)
+            function playSound(type, note = 'C4') {
+                if (!audioReady) return;
+                
+                try {
+                    if (type === 'swap') {
+                        swapSynth.triggerAttackRelease(note, "8n", Tone.now());
+                    } else if (type === 'match') {
+                        matchSynth.triggerAttackRelease(note, "8n", Tone.now());
+                    } else if (type === 'error') {
+                        errorSynth.triggerAttackRelease("C2", "8n", Tone.now());
+                    }
+                } catch (e) {
+                    console.error("Audio playback error:", e);
+                }
+            }
+            
+            // Start audio context on first user interaction
+            function initAudio() {
+                if (audioReady) return;
+                Tone.start();
+                audioReady = true;
+                console.log("Audio Context Initialized.");
+            }
+            document.body.addEventListener('click', initAudio, { once: true });
+
+
+            // --- 3. GAME LOGIC & STATE ---
+            const GRID_SIZE = 8;
+            const GEMS = ['💎', '✨', '💠', '🌠', '🔮', '🌟'];
+            const INITIAL_MOVES = 30;
+
+            const gameBoard = document.getElementById('game-board');
+            const scoreEl = document.getElementById('score');
+            const movesEl = document.getElementById('moves');
+            const resetButton = document.getElementById('reset-button');
+            const gameOverModal = document.getElementById('game-over-modal');
+            const finalScoreEl = document.getElementById('final-score');
+            const restartButton = document.getElementById('restart-button');
+
+            let grid = [];
+            let score = 0;
+            let moves = INITIAL_MOVES;
+            let selectedCell = null;
+            let isProcessing = false; // Lock to prevent multi-clicks
+
+            // Set grid size for CSS
+            gameBoard.style.setProperty('--grid-size', GRID_SIZE);
+
+            function initGame() {
+                score = 0;
+                moves = INITIAL_MOVES;
+                isProcessing = false;
+                selectedCell = null;
+                updateDashboard();
+                createGrid();
+                renderGrid();
+                hideGameOver();
+            }
+
+            function updateDashboard() {
+                scoreEl.textContent = score;
+                movesEl.textContent = moves;
+            }
+
+            function createGrid() {
+                grid = [];
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    const row = [];
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        let gem;
+                        // Keep generating until there are no initial matches
+                        do {
+                            gem = getRandomGem();
+                        } while (
+                            (c >= 2 && gem === row[c - 1] && gem === row[c - 2]) ||
+                            (r >= 2 && gem === grid[r - 1][c] && gem === grid[r - 2][c])
+                        );
+                        row.push(gem);
+                    }
+                    grid.push(row);
+                }
+            }
+            
+            function getRandomGem() {
+                return GEMS[Math.floor(Math.random() * GEMS.length)];
+            }
+
+            function renderGrid() {
+                gameBoard.innerHTML = '';
+                grid.forEach((row, r) => {
+                    row.forEach((gem, c) => {
+                        const cell = document.createElement('div');
+                        cell.classList.add('game-cell');
+                        cell.dataset.row = r;
+                        cell.dataset.col = c;
+                        cell.textContent = gem;
+                        
+                        // Add pop-in animation for cells that are "new" (e.g., just filled)
+                        if (gem && !cell.classList.contains('rendered')) {
+                            cell.classList.add('pop-in', 'rendered');
+                        }
+
+                        cell.addEventListener('click', () => onCellClick(cell, r, c));
+                        gameBoard.appendChild(cell);
+                    });
+                });
+            }
+            
+            async function onCellClick(cell, r, c) {
+                if (isProcessing) return;
+                
+                if (!selectedCell) {
+                    // First selection
+                    cell.classList.add('selected');
+                    selectedCell = { cell, r, c };
+                    playSound('swap', 'C5');
+                } else {
+                    // Second selection
+                    const { cell: prevCell, r: prevR, c: prevC } = selectedCell;
+
+                    if (prevR === r && prevC === c) {
+                        // Deselected same cell
+                        cell.classList.remove('selected');
+                        selectedCell = null;
+                        return;
+                    }
+
+                    // Check if adjacent
+                    const isAdjacent = Math.abs(prevR - r) + Math.abs(prevC - c) === 1;
+                    
+                    if (isAdjacent) {
+                        isProcessing = true; // Lock controls
+                        prevCell.classList.remove('selected');
+                        await handleSwap(prevR, prevC, r, c);
+                        selectedCell = null;
+                        isProcessing = false; // Unlock controls
+                    } else {
+                        // Not adjacent
+                        playSound('error');
+                        prevCell.classList.remove('selected');
+                        cell.classList.add('selected');
+                        selectedCell = { cell, r, c };
+                        playSound('swap', 'C5');
+                    }
+                }
+            }
+
+            async function handleSwap(r1, c1, r2, c2) {
+                // Swap in the grid array
+                [grid[r1][c1], grid[r2][c2]] = [grid[r2][c2], grid[r1][c1]];
+
+                // Swap in the DOM
+                const cell1 = document.querySelector(`[data-row='${r1}'][data-col='${c1}']`);
+                const cell2 = document.querySelector(`[data-row='${r2}'][data-col='${c2}']`);
+                
+                swapDOM(cell1, cell2);
+                playSound('swap', 'G4');
+
+                await delay(300); // Wait for swap animation
+
+                const matches = findAllMatches();
+                
+                if (matches.length > 0) {
+                    // Valid swap, decrement moves
+                    moves--;
+                    updateDashboard();
+                    
+                    let chain = 1;
+                    let totalScore = 0;
+                    let currentMatches = matches;
+                    
+                    // Start match and cascade loop
+                    while (currentMatches.length > 0) {
+                        const points = currentMatches.length * chain * 10;
+                        totalScore += points;
+                        
+                        // Play sound based on chain
+                        playSound('match', ['C4', 'E4', 'G4', 'C5'][Math.min(chain - 1, 3)]);
+                        chain++;
+                        
+                        await processMatches(currentMatches);
+                        await applyGravity();
+                        await fillNewGems();
+                        
+                        currentMatches = findAllMatches();
+                        await delay(300); // Pause for visual clarity
+                    }
+                    
+                    score += totalScore;
+                    updateDashboard();
+                    
+                    if (moves <= 0) {
+                        showGameOver();
+                    }
+                } else {
+                    // Invalid swap, swap back
+                    playSound('error');
+                    await delay(300);
+                    [grid[r1][c1], grid[r2][c2]] = [grid[r2][c2], grid[r1][c1]]; // Swap back in array
+                    swapDOM(cell1, cell2); // Swap back in DOM
+                }
+            }
+            
+            // Helper to swap DOM elements visually
+            function swapDOM(cell1, cell2) {
+                const tempText = cell1.textContent;
+                cell1.textContent = cell2.textContent;
+                cell2.textContent = tempText;
+            }
+
+            function findAllMatches() {
+                const matches = new Set(); // Use a Set to avoid duplicates
+                
+                // Horizontal
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    for (let c = 0; c < GRID_SIZE - 2; c++) {
+                        if (grid[r][c] && grid[r][c] === grid[r][c+1] && grid[r][c] === grid[r][c+2]) {
+                            matches.add(`${r},${c}`);
+                            matches.add(`${r},${c+1}`);
+                            matches.add(`${r},${c+2}`);
+                        }
+                    }
+                }
+                
+                // Vertical
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    for (let r = 0; r < GRID_SIZE - 2; r++) {
+                        if (grid[r][c] && grid[r][c] === grid[r+1][c] && grid[r][c] === grid[r+2][c]) {
+                            matches.add(`${r},${c}`);
+                            matches.add(`${r+1},${c}`);
+                            matches.add(`${r+2},${c}`);
+                        }
+                    }
+                }
+                
+                // Convert Set back to array of coordinates
+                return Array.from(matches).map(coord => {
+                    const [r, c] = coord.split(',').map(Number);
+                    return { r, c };
+                });
+            }
+
+            async function processMatches(matches) {
+                // Animate removal in DOM
+                for (const { r, c } of matches) {
+                    const cell = document.querySelector(`[data-row='${r}'][data-col='${c}']`);
+                    if (cell) {
+                        cell.classList.add('matched');
+                    }
+                }
+                
+                await delay(400); // Wait for 'matched' animation
+                
+                // Remove from grid array (set to null)
+                for (const { r, c } of matches) {
+                    grid[r][c] = null;
+                    const cell = document.querySelector(`[data-row='${r}'][data-col='${c}']`);
+                    if(cell) {
+                        cell.textContent = '';
+                        cell.classList.remove('matched');
+                    }
+                }
+            }
+
+            async function applyGravity() {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    let emptyRow = GRID_SIZE - 1;
+                    for (let r = GRID_SIZE - 1; r >= 0; r--) {
+                        if (grid[r][c] !== null) {
+                            if (emptyRow !== r) {
+                                // Move gem down in grid array
+                                grid[emptyRow][c] = grid[r][c];
+                                grid[r][c] = null;
+                                
+                                // Move gem down in DOM
+                                const cellToMove = document.querySelector(`[data-row='${r}'][data-col='${c}']`);
+                                const emptyCell = document.querySelector(`[data-row='${emptyRow}'][data-col='${c}']`);
+                                emptyCell.textContent = cellToMove.textContent;
+                                cellToMove.textContent = '';
+                            }
+                            emptyRow--;
+                        }
+                    }
+                }
+                await delay(300); // Wait for gravity
+            }
+
+            async function fillNewGems() {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    for (let r = 0; r < GRID_SIZE; r++) {
+                        if (grid[r][c] === null) {
+                            grid[r][c] = getRandomGem();
+                            const cell = document.querySelector(`[data-row='${r}'][data-col='${c}']`);
+                            cell.textContent = grid[r][c];
+                            cell.classList.add('pop-in');
+                            await delay(50); // Stagger pop-in
+                            cell.classList.remove('pop-in');
+                        }
+                    }
+                }
+            }
+            
+            function showGameOver() {
+                isProcessing = true;
+                finalScoreEl.textContent = score;
+                gameOverModal.classList.add('visible');
+            }
+            
+            function hideGameOver() {
+                gameOverModal.classList.remove('visible');
+            }
+
+            function delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
+            // Event Listeners
+            resetButton.addEventListener('click', initGame);
+            restartButton.addEventListener('click', initGame);
+
+            // Start the game!
+            initGame();
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
