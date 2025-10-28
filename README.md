@@ -1,54 +1,65 @@
-Project: EmojiCrush Console
-URL: rajatkumar1.me/EmojiCrush
+# 🎮 EmojiCrush Console  
+**URL:** [rajatkumar1.me/EmojiCrush](https://rajatkumar1.me/EmojiCrush)
 
-Project Overview
+---
 
-EmojiCrush Console is a static, single-page web application that reimagines the classic match-3 game as a futuristic, high-tech console. It is designed to be visually "unrealistic" and sleek, prioritizing aesthetics and a unique user experience through a combination of modern web technologies.
+## 🧩 Project Overview  
 
-The entire application is self-contained in a single HTML file, demonstrating robust front-end development without any backend dependencies.
+**EmojiCrush Console** is a static, single-page web application that reimagines the classic **match-3** game as a **futuristic, high-tech console**.  
+It is designed to be visually *unrealistic* and sleek, prioritizing aesthetics and a unique user experience through a combination of modern web technologies.  
 
-Key Features
+The entire application is **self-contained in a single HTML file**, showcasing robust front-end development **without any backend dependencies**.
 
-Sleek Glassmorphism UI: The main console panel uses semi-transparent backgrounds, backdrop filters (blur), and glowing borders to create a "glass" effect, making it appear to float over the animated background.
+---
 
-Dynamic Particle Background: Utilizes the tsparticles library to generate a complex, interactive field of moving and connecting particles, giving the page a "live" and futuristic feel.
+## ✨ Key Features  
 
-Generative Audio: Integrates Tone.js to create synth-based sound effects for key game actions (gem swap, match, invalid move). This avoids static audio files and enhances the "console" aesthetic.
+### 🧊 Sleek Glassmorphism UI  
+- Semi-transparent panels with **backdrop blur** and **glowing borders** create a “floating glass” effect.  
+- The main console visually hovers over an animated background.
 
-Fully Responsive Design: The game grid and all UI elements are fully responsive. The layout uses a combination of Tailwind CSS, clamp(), and vmin units to ensure the game looks and plays perfectly on all devices, from mobile phones to desktops, with no scrollbars.
+### 🌌 Dynamic Particle Background  
+- Uses **tsparticles** to generate a complex, interactive network of moving particles.  
+- Gives the page a *live* and *futuristic* atmosphere.
 
-Robust Game Logic: The core game logic is built in pure JavaScript, handling:
+### 🎵 Generative Audio  
+- Integrates **Tone.js** for **real-time synth-based sound effects** (swap, match, invalid move).  
+- Eliminates static audio files for a pure console-like experience.
 
-Grid generation with no initial matches.
+### 📱 Fully Responsive Design  
+- Built with **Tailwind CSS**, `clamp()`, and `vmin` units for fluid scaling.  
+- Perfectly adapts across all screen sizes — mobile to desktop — with **no scrollbars**.
 
-Player input (gem selection and swapping).
+### 🧠 Robust Game Logic  
+Written entirely in **pure JavaScript (ES6+)**, the logic handles:
+- Grid generation with no initial matches.  
+- Player input, gem selection, and swapping.  
+- Validation for adjacent-only swaps.  
+- Match detection (horizontal & vertical).  
+- Cascading matches and chain reactions.  
+- “Gravity” physics for falling gems.  
+- Automatic refilling of the board.  
+- Score tracking, move limits, and game-over modal.
 
-Adjacent-only swap validation.
+### 🚀 High-Tech Theming  
+- Uses the **Orbitron** Google Font for a consistent sci-fi console aesthetic.  
 
-Match detection (3-in-a-row, horizontal and vertical).
+### 🌀 Animated Transitions  
+- Smooth **CSS keyframe animations** for swaps, matches, and new gem entries.  
+- Ensures polished, visually engaging gameplay.
 
-Cascading matches and chain reactions.
+---
 
-"Gravity" physics for gems falling into empty spaces.
+## 🧰 Technology Stack  
 
-Refilling the board with new gems.
+| Technology | Purpose |
+|-------------|----------|
+| **HTML5** | Structural foundation of the app |
+| **Tailwind CSS (CDN)** | Styling, layout, responsiveness |
+| **JavaScript (ES6+)** | Game logic, state management, DOM manipulation |
+| **tsparticles (CDN)** | Animated particle background |
+| **Tone.js (CDN)** | Real-time sound generation |
 
-Score and move tracking.
+---
 
-Game over state and modal.
-
-High-Tech Theming: The "Orbitron" Google Font is used throughout to maintain a consistent, sci-fi/console theme.
-
-Animated Transitions: All game actions (gem swaps, matches, new gem-fills) are accompanied by smooth CSS animations (@keyframes) for a polished user experience.
-
-Technology Stack
-
-HTML5: Serves as the structural foundation.
-
-Tailwind CSS (CDN): Used for all styling, layout, and responsiveness.
-
-JavaScript (ES6+): Powers all game logic, state management, and DOM manipulation.
-
-tsparticles (CDN): A lightweight library for creating the animated particle background.
-
-Tone.js (CDN): A Web Audio framework used to generate all sound effects in real-time.
+*EmojiCrush Console* is not just a game — it’s a **demonstration of front-end power**, visual design, and creative coding in one file.
